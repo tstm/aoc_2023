@@ -59,9 +59,11 @@ impl Round {
     }
 }
 
+use rayon::prelude::*;
+
 pub fn part2(input: &str) -> Result<u32, String> {
     Ok(input
-        .lines()
+        .par_lines()
         .map(|l| Game::new(l).find_power())
         .sum::<u32>())
 }
