@@ -60,11 +60,9 @@ impl Round {
     }
 }
 
-use rayon::prelude::*;
-
 pub fn part1(input: &str) -> Result<u32, String> {
     Ok(input
-        .par_lines()
+        .lines()
         .map(|l| Game::new(l).is_possible())
         .sum::<u32>())
 }
