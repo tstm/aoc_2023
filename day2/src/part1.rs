@@ -63,13 +63,6 @@ impl Round {
 use rayon::prelude::*;
 
 pub fn part1(input: &str) -> Result<u32, String> {
-    // let mut sum = 0;
-    // for line in input.lines() {
-    //     let game = Game::new(line);
-    //     if game.is_possible() {
-    //         sum += game.id;
-    //     }
-    // }
     Ok(input
         .par_lines()
         .map(|l| Game::new(l).is_possible())
