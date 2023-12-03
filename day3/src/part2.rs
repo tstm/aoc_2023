@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::collections::BTreeMap;
 
 #[derive(Debug)]
@@ -89,8 +90,7 @@ pub fn part2(input: &str) -> Result<usize, String> {
     }
 
     Ok(symbols
-        .iter()
-        .map(|n| n.get_gear_ratio(&numbers))
-        .flatten()
+        .par_iter()
+        .flat_map(|n| n.get_gear_ratio(&numbers))
         .sum())
 }

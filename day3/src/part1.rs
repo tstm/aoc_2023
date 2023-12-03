@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
@@ -102,9 +103,8 @@ pub fn part1(input: &str) -> Result<usize, String> {
     }
 
     Ok(symbols
-        .iter()
-        .map(|s| s.get_nearby(&numbers))
-        .flatten()
+        .par_iter()
+        .flat_map(|s| s.get_nearby(&numbers))
         .map(|n| n.value)
         .sum())
 }
