@@ -15,22 +15,18 @@ impl Number {
 struct Symbol {
     x: isize,
     y: isize,
-    symbol: char,
 }
 
 impl Symbol {
     fn new(x: isize, y: isize, symbol: char) -> Option<Symbol> {
-        if symbol != '.' && !symbol.is_numeric() {
-            Some(Symbol { x, y, symbol })
+        if symbol == '*' {
+            Some(Symbol { x, y })
         } else {
             None
         }
     }
 
     fn get_gear_ratio(&self, numbers: &BTreeMap<isize, Vec<Number>>) -> Option<usize> {
-        if self.symbol != '*' {
-            return None;
-        }
         let mut found: Vec<usize> = vec![];
         for (_, list) in numbers.range((&self.x - 1)..=(&self.x + 1)) {
             for n in list {
@@ -66,7 +62,7 @@ pub fn part2(input: &str) -> Result<usize, String> {
                 c => {
                     if numbuf.len() != 0 {
                         if !numbers.contains_key(&line_number) {
-                            numbers.insert(line_number as isize, vec![]);
+                            numbers.insert(line_number, vec![]);
                         }
                         numbers.get_mut(&line_number).unwrap().push(Number::new(
                             char_number - numbuf.len() as isize,
