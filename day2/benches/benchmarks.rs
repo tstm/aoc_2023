@@ -1,6 +1,6 @@
 fn main() {
     rayon::ThreadPoolBuilder::new()
-        .num_threads(6)
+        .num_threads(3)
         .build_global()
         .unwrap();
     divan::main();
