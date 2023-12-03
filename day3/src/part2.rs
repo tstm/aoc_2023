@@ -57,14 +57,12 @@ pub fn part2(input: &str) -> Result<usize, String> {
         for (char_number, character) in line.chars().enumerate() {
             let char_number = char_number as isize;
             match character {
-                c if c.is_digit(10) => {
+                c if c.is_ascii_digit() => {
                     numbuf.push(c);
                 }
                 c => {
-                    if numbuf.len() != 0 {
-                        if !numbers.contains_key(&line_number) {
-                            numbers.insert(line_number, vec![]);
-                        }
+                    if !numbuf.is_empty() {
+                        numbers.entry(line_number).or_insert_with(Vec::new);
                         numbers.get_mut(&line_number).unwrap().push(Number::new(
                             char_number - numbuf.len() as isize,
                             numbuf.parse::<usize>().expect("Parsing number failed"),
@@ -78,10 +76,8 @@ pub fn part2(input: &str) -> Result<usize, String> {
                 }
             }
         }
-        if numbuf.len() != 0 {
-            if !numbers.contains_key(&line_number) {
-                numbers.insert(line_number as isize, vec![]);
-            }
+        if !numbuf.is_empty() {
+            numbers.entry(line_number).or_insert_with(Vec::new);
             numbers.get_mut(&line_number).unwrap().push(Number::new(
                 line.len() as isize - numbuf.len() as isize,
                 numbuf.parse::<usize>().expect("Parsing number failed"),

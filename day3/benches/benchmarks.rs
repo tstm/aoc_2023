@@ -17,7 +17,7 @@ mod part1 {
     fn main(bencher: Bencher) {
         bencher
             .with_inputs(|| include_str!("../input.txt"))
-            .bench_values(|input| part1(input))
+            .bench_values(part1)
     }
 }
 
@@ -27,6 +27,6 @@ mod part2 {
     fn main(bencher: Bencher) {
         bencher
             .with_inputs(|| include_str!("../input.txt"))
-            .bench_values(|input| part2(input))
+            .bench_values(part2)
     }
 }
