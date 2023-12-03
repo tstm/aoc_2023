@@ -1,17 +1,15 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 struct Number {
     value: usize,
-    _x: isize,
     y: isize,
     next_to_number: bool,
 }
 
 impl Number {
-    fn new(x: isize, y: isize, value: usize) -> Number {
+    fn new(y: isize, value: usize) -> Number {
         Number {
-            _x: x,
             y,
             value,
             next_to_number: false,
@@ -45,11 +43,12 @@ impl Symbol {
         }
     }
 
-    fn get_nearby<'a>(&'a self, numbers: &'a BTreeMap<isize, Vec<Number>>) -> HashSet<&Number> {
-        let mut nearby = HashSet::new();
+    fn get_nearby<'a>(&'a self, numbers: &'a BTreeMap<isize, Vec<Number>>) -> BTreeSet<&Number> {
+        let mut nearby = BTreeSet::new();
         for (_, lines) in numbers.range((&self.x - 1)..=(&self.x + 1)) {
             for n in lines {
-                let yrange = (n.y - 1)..=(n.y + n.value.to_string().len() as isize);
+                let yrange =
+                    (n.y - 1)..=(n.y + (n.value.checked_ilog10().unwrap_or(0) + 1) as isize);
 
                 if yrange.contains(&self.y) {
                     nearby.insert(n);
@@ -79,7 +78,6 @@ pub fn part1(input: &str) -> Result<usize, String> {
                             numbers.insert(line_number as isize, vec![]);
                         }
                         numbers.get_mut(&line_number).unwrap().push(Number::new(
-                            line_number,
                             char_number - numbuf.len() as isize,
                             numbuf.parse::<usize>().expect("Parsing number failed"),
                         ));
@@ -97,7 +95,6 @@ pub fn part1(input: &str) -> Result<usize, String> {
                 numbers.insert(line_number as isize, vec![]);
             }
             numbers.get_mut(&line_number).unwrap().push(Number::new(
-                line_number,
                 line.len() as isize - numbuf.len() as isize,
                 numbuf.parse::<usize>().expect("Parsing number failed"),
             ));

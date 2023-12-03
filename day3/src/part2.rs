@@ -3,13 +3,12 @@ use std::collections::BTreeMap;
 #[derive(Debug)]
 struct Number {
     value: usize,
-    x: isize,
     y: isize,
 }
 
 impl Number {
-    fn new(x: isize, y: isize, value: usize) -> Number {
-        Number { x, y, value }
+    fn new(y: isize, value: usize) -> Number {
+        Number { y, value }
     }
 }
 
@@ -35,12 +34,10 @@ impl Symbol {
         let mut found: Vec<usize> = vec![];
         for (_, list) in numbers.range((&self.x - 1)..=(&self.x + 1)) {
             for n in list {
-                let yrange = (n.y - 1)..=(n.y + n.value.to_string().len() as isize);
-                // eprintln!("xrange: {:?}, yrange {:?}", xrange, yrange);
-                // eprintln!("Testing gear value {}", n.value);
+                let yrange =
+                    (n.y - 1)..=(n.y + (n.value.checked_ilog10().unwrap_or(0) + 1) as isize);
 
                 if yrange.contains(&self.y) {
-                    // eprintln!("Found gear value {}", n.value);
                     found.push(n.value);
                 }
             }
@@ -72,7 +69,6 @@ pub fn part2(input: &str) -> Result<usize, String> {
                             numbers.insert(line_number as isize, vec![]);
                         }
                         numbers.get_mut(&line_number).unwrap().push(Number::new(
-                            line_number,
                             char_number - numbuf.len() as isize,
                             numbuf.parse::<usize>().expect("Parsing number failed"),
                         ));
@@ -90,7 +86,6 @@ pub fn part2(input: &str) -> Result<usize, String> {
                 numbers.insert(line_number as isize, vec![]);
             }
             numbers.get_mut(&line_number).unwrap().push(Number::new(
-                line_number,
                 line.len() as isize - numbuf.len() as isize,
                 numbuf.parse::<usize>().expect("Parsing number failed"),
             ));
