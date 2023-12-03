@@ -1,6 +1,6 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Hash)]
 struct Number {
     value: usize,
     _x: isize,
@@ -33,7 +33,7 @@ impl Symbol {
         }
     }
 
-    fn set_nearby(self, numbers: &mut BTreeMap<isize, Vec<Number>>) {
+    fn _set_nearby(self, numbers: &mut BTreeMap<isize, Vec<Number>>) {
         for (_, lines) in numbers.range_mut((&self.x - 1)..=(&self.x + 1)) {
             for n in lines {
                 let yrange = (n.y - 1)..=(n.y + n.value.to_string().len() as isize);
@@ -43,6 +43,20 @@ impl Symbol {
                 }
             }
         }
+    }
+
+    fn get_nearby<'a>(&'a self, numbers: &'a BTreeMap<isize, Vec<Number>>) -> HashSet<&Number> {
+        let mut nearby = HashSet::new();
+        for (_, lines) in numbers.range((&self.x - 1)..=(&self.x + 1)) {
+            for n in lines {
+                let yrange = (n.y - 1)..=(n.y + n.value.to_string().len() as isize);
+
+                if yrange.contains(&self.y) {
+                    nearby.insert(n);
+                }
+            }
+        }
+        nearby
     }
 }
 
@@ -90,14 +104,10 @@ pub fn part1(input: &str) -> Result<usize, String> {
         }
     }
 
-    for s in symbols {
-        s.set_nearby(&mut numbers);
-    }
-
-    Ok(numbers
-        .values()
+    Ok(symbols
+        .iter()
+        .map(|s| s.get_nearby(&numbers))
         .flatten()
-        .filter(|n| n.next_to_number)
         .map(|n| n.value)
         .sum())
 }
