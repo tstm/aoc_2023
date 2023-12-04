@@ -1,18 +1,15 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 pub fn part2(input: &str) -> Result<usize, String> {
-    let mut copies = BTreeMap::<usize, usize>::new();
+    // let mut copies = BTreeMap::<usize, usize>::new();
+    let line_count = input.lines().count();
+    let mut copies: Vec<usize> = vec![0; line_count];
     Ok(input
         .lines()
         .enumerate()
         .map(|(n, line)| {
             let count = get_winnings(&line);
-            let num_copies = *copies.get(&n).unwrap_or(&0);
+            let num_copies = copies[n];
             for lineid in (n + 1)..=(n + count) {
-                copies
-                    .entry(lineid)
-                    .and_modify(|e| *e += 1 + num_copies)
-                    .or_insert_with(|| 1 + num_copies);
+                copies[lineid] += 1 + num_copies;
             }
             1 + num_copies
         })
@@ -30,14 +27,12 @@ fn get_winnings(line: &str) -> usize {
     let winning_numbers = winning_row
         .trim()
         .split_whitespace()
-        .map(|n| n.parse::<isize>().expect("Parse number failed"))
-        .collect::<BTreeSet<isize>>();
+        .map(|n| n.parse::<usize>().expect("Parse number failed"))
+        .collect::<Vec<usize>>();
 
-    let had_numbers = had_row
+    had_row
         .trim()
         .split_whitespace()
-        .map(|n| n.parse::<isize>().expect("Parse number failed"))
-        .collect::<BTreeSet<isize>>();
-
-    winning_numbers.intersection(&had_numbers).count()
+        .filter(|n| winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed")))
+        .count()
 }
