@@ -18,7 +18,7 @@ pub fn part2(input: &str) -> Result<usize, String> {
 }
 
 fn get_winnings(line: &str) -> usize {
-    let (winning_row, had_row) = line
+    let (winning_row, my_row) = line
         .split_once(": ")
         .expect("There should be :")
         .1
@@ -30,7 +30,7 @@ fn get_winnings(line: &str) -> usize {
         .map(|n| n.parse::<usize>().expect("Parse number failed"))
         .collect::<Vec<usize>>();
 
-    had_row
+    my_row
         .split_whitespace()
         .filter(|n| winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed")))
         .count()

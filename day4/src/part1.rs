@@ -5,7 +5,7 @@ pub fn part1(input: &str) -> Result<usize, String> {
     Ok(input
         .par_lines()
         .map(|line| {
-            let (winning_row, had_row) = line
+            let (winning_row, my_row) = line
                 .split_once(": ")
                 .expect("There should be :")
                 .1
@@ -17,7 +17,7 @@ pub fn part1(input: &str) -> Result<usize, String> {
                 .map(|n| n.parse::<usize>().expect("Parse number failed"))
                 .collect::<Vec<usize>>();
 
-            let count = had_row
+            let count = my_row
                 .split_whitespace()
                 .filter(|n| {
                     winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed"))
