@@ -13,13 +13,11 @@ pub fn part1(input: &str) -> Result<usize, String> {
                 .expect("Row split failed");
 
             let winning_numbers = winning_row
-                .trim()
                 .split_whitespace()
                 .map(|n| n.parse::<usize>().expect("Parse number failed"))
                 .collect::<Vec<usize>>();
 
             let count = had_row
-                .trim()
                 .split_whitespace()
                 .filter(|n| {
                     winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed"))

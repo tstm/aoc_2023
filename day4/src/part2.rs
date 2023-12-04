@@ -27,13 +27,11 @@ fn get_winnings(line: &str) -> usize {
         .expect("Row split failed");
 
     let winning_numbers = winning_row
-        .trim()
         .split_whitespace()
         .map(|n| n.parse::<usize>().expect("Parse number failed"))
         .collect::<Vec<usize>>();
 
     had_row
-        .trim()
         .split_whitespace()
         .filter(|n| winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed")))
         .count()
