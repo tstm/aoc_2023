@@ -1,12 +1,14 @@
+use rayon::prelude::*;
+
 pub fn part2(input: &str) -> Result<usize, String> {
-    // let mut copies = BTreeMap::<usize, usize>::new();
     let line_count = input.lines().count();
     let mut copies: Vec<usize> = vec![0; line_count];
-    Ok(input
-        .lines()
+    let counts: Vec<usize> = input.par_lines().map(|line| get_winnings(&line)).collect();
+
+    Ok(counts
+        .iter()
         .enumerate()
-        .map(|(n, line)| {
-            let count = get_winnings(&line);
+        .map(|(n, count)| {
             let num_copies = copies[n];
             for lineid in (n + 1)..=(n + count) {
                 copies[lineid] += 1 + num_copies;
