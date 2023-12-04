@@ -9,11 +9,10 @@ pub fn part2(input: &str) -> Result<usize, String> {
         .iter()
         .enumerate()
         .map(|(n, count)| {
-            let num_copies = copies[n];
             for lineid in (n + 1)..=(n + count) {
-                copies[lineid] += 1 + num_copies;
+                copies[lineid] += 1 + copies[n];
             }
-            1 + num_copies
+            1 + copies[n]
         })
         .sum())
 }
