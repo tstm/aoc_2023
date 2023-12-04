@@ -1,5 +1,5 @@
 use rayon::prelude::*;
-use std::collections::BTreeSet;
+// use std::collections::{BTreeSet, HashMap, HashSet};
 
 pub fn part1(input: &str) -> Result<usize, String> {
     Ok(input
@@ -15,16 +15,18 @@ pub fn part1(input: &str) -> Result<usize, String> {
             let winning_numbers = winning_row
                 .trim()
                 .split_whitespace()
-                .map(|n| n.parse::<isize>().expect("Parse number failed"))
-                .collect::<BTreeSet<isize>>();
+                .map(|n| n.parse::<usize>().expect("Parse number failed"))
+                .collect::<Vec<usize>>();
 
-            let had_numbers = had_row
+            let count = had_row
                 .trim()
                 .split_whitespace()
-                .map(|n| n.parse::<isize>().expect("Parse number failed"))
-                .collect::<BTreeSet<isize>>();
+                .filter(|n| {
+                    winning_numbers.contains(&n.parse::<usize>().expect("Parse number failed"))
+                })
+                .count();
 
-            match winning_numbers.intersection(&had_numbers).count() {
+            match count {
                 0 => 0,
                 count => 2usize.pow(count as u32 - 1),
             }
