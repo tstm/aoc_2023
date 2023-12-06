@@ -6,8 +6,8 @@ fn main() {
     divan::main();
 }
 
-use day6::part1::part1;
-use day6::part2::part2;
+use day6::part1::run as run1;
+use day6::part2::run as run2;
 use divan::Bencher;
 use std::time::Duration;
 
@@ -17,7 +17,7 @@ mod part1 {
     fn main(bencher: Bencher) {
         bencher
             .with_inputs(|| include_str!("../input.txt"))
-            .bench_values(part1)
+            .bench_values(run1)
     }
 }
 
@@ -27,6 +27,6 @@ mod part2 {
     fn main(bencher: Bencher) {
         bencher
             .with_inputs(|| include_str!("../input.txt"))
-            .bench_values(part2)
+            .bench_values(run2)
     }
 }

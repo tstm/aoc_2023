@@ -49,7 +49,7 @@ impl Race {
     }
 }
 
-pub fn part1(input: &str) -> Result<usize, String> {
+pub fn run(input: &str) -> Result<usize, String> {
     let races = Race::parse_races(input);
     Ok(races.iter().map(|race| race.count_winning()).product())
 }

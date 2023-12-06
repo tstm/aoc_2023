@@ -92,7 +92,7 @@ fn parse_conversion_map(input: &str) -> ConversionMap {
     }
 }
 
-pub fn part1(input: &str) -> Result<usize, String> {
+pub fn run(input: &str) -> Result<usize, String> {
     // let seeds = lineiter.next().unwrap();
     let chunks: Vec<_> = input.split_terminator("\n\n").collect();
     let seeds = parse_seeds(chunks[0]);

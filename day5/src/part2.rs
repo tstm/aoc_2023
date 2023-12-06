@@ -81,7 +81,7 @@ fn parse_seeds(input: &str) -> RangeSetBlaze<isize> {
     seeds.union()
 }
 
-pub fn part2(input: &str) -> Result<isize, String> {
+pub fn run(input: &str) -> Result<isize, String> {
     // let seeds = lineiter.next().unwrap();
     let chunks: Vec<_> = input.split_terminator("\n\n").collect();
     let seeds = parse_seeds(chunks[0]);

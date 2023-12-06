@@ -38,7 +38,7 @@ impl Race {
     }
 }
 
-pub fn part2(input: &str) -> Result<usize, String> {
+pub fn run(input: &str) -> Result<usize, String> {
     let race = Race::parse_race(input);
     Ok(race.count_winning())
 }
