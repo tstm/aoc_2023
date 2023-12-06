@@ -32,10 +32,21 @@ impl Race {
     fn count_winning(&self) -> usize {
         let t: f64 = self.time as f64;
         let d: f64 = self.distance as f64;
-        let min = ((t - (t * t - 4 as f64 * d).sqrt()) / 2 as f64).floor() as usize;
-        let max = (((t * t - 4 as f64 * d).sqrt() + t) / 2 as f64).floor() as usize;
+        let min = (t - (t * t - 4 as f64 * d).sqrt()) / 2 as f64;
+        let max = (t + (t * t - 4 as f64 * d).sqrt()) / 2 as f64;
+
+        let min = min.floor() as usize;
+        let max = (max - 1f64).ceil() as usize;
         max - min
     }
+
+    // fn count_winning(&self) -> usize {
+    //     let t: f64 = self.time as f64;
+    //     let d: f64 = self.distance as f64;
+    //     let min = ((t - (t * t - 4 as f64 * d).sqrt()) / 2 as f64).floor() as usize;
+    //     let max = (((t * t - 4 as f64 * d).sqrt() + t) / 2 as f64).floor() as usize;
+    //     max - min
+    // }
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
