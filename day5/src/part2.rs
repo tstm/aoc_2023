@@ -52,7 +52,7 @@ impl ConversionLayer {
     }
 
     fn convert(&self, input: RangeSetBlaze<isize>) -> RangeSetBlaze<isize> {
-        let mut current = input.clone();
+        let mut current = input;
         let mut output = vec![];
         for map in self.maps.iter() {
             let (remains, mapped) = map.convert(current);
