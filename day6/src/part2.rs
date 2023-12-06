@@ -1,39 +1,30 @@
 struct Race {
-    time: usize,
-    distance: usize,
+    time: f64,
+    distance: f64,
 }
 
 impl Race {
     fn parse_race(input: &str) -> Race {
-        let mut iter = input.lines();
-        let time = iter
-            .next()
-            .unwrap()
-            .chars()
-            .map(|s| if s.is_ascii_digit() { Some(s) } else { None })
-            .flatten()
-            .collect::<String>()
-            .parse::<usize>()
-            .unwrap();
+        let mut iter = input.lines().map(|line| {
+            line.chars()
+                .filter(|c| c.is_ascii_digit())
+                .collect::<String>()
+        });
 
-        let distance = iter
-            .next()
-            .unwrap()
-            .chars()
-            .map(|s| if s.is_ascii_digit() { Some(s) } else { None })
-            .flatten()
-            .collect::<String>()
-            .parse::<usize>()
-            .unwrap();
+        let time = iter.next().unwrap();
+        let distance = iter.next().unwrap();
 
-        Race { time, distance }
+        Race {
+            time: time.parse::<f64>().unwrap(),
+            distance: distance.parse::<f64>().unwrap(),
+        }
     }
 
     fn count_winning(&self) -> usize {
-        let t: f64 = self.time as f64;
-        let d: f64 = self.distance as f64;
-        let min = (t - (t * t - 4 as f64 * d).sqrt()) / 2 as f64;
-        let max = (t + (t * t - 4 as f64 * d).sqrt()) / 2 as f64;
+        let t: f64 = self.time;
+        let d: f64 = self.distance;
+        let min = (t - (t * t - 4f64 * d).sqrt()) / 2f64;
+        let max = (t + (t * t - 4f64 * d).sqrt()) / 2f64;
 
         let min = min.floor() as usize;
         let max = (max - 1f64).ceil() as usize;
