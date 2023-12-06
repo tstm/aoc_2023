@@ -9,3 +9,11 @@ edition = "2021"
 itertools = "0.12.0"
 range-collections = "0.4.5"
 range-set-blaze = "0.1.13"
+rayon = "1.8.0"
+
+[dev-dependencies]
+divan = "0.1.5"
+
+[[bench]]
+name = "benchmarks"
+harness = false

@@ -39,7 +39,7 @@ impl ConversionMap {
 
 struct ConversionLayer {
     maps: Vec<ConversionMap>,
-    name: String,
+    _name: String,
 }
 
 impl ConversionLayer {
@@ -48,7 +48,7 @@ impl ConversionLayer {
         let name = iter.next().expect("Should be topic string").to_string();
         let maps = iter.map(|c| ConversionMap::parse(c)).collect();
 
-        ConversionLayer { name, maps }
+        ConversionLayer { _name: name, maps }
     }
 
     fn convert(&self, input: RangeSetBlaze<isize>) -> RangeSetBlaze<isize> {

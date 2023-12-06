@@ -111,7 +111,6 @@ pub fn part1(input: &str) -> Result<usize, String> {
                 m.iter().find_map(|x| x.convert(s)).unwrap_or(s)
             })
         })
-        .inspect(|f| println!("Result: {}", f))
         .min()
         .expect("No value found?"))
 }
