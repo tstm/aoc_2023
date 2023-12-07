@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_variables)]
 
+use rayon::prelude::*;
 use std::cmp::Ordering;
 
 #[derive(PartialOrd, PartialEq, Ord, Eq, Clone, Debug, Copy)]
@@ -76,7 +77,7 @@ impl Combination {
     }
 
     fn unique_count(cards: &[Card; 5]) -> usize {
-        let mut cardvec = cards.clone().to_vec();
+        let mut cardvec = cards.to_vec();
         cardvec.sort();
         cardvec.dedup();
         cardvec.len()
@@ -84,7 +85,7 @@ impl Combination {
 
     fn highest_count(cards: &[Card; 5]) -> usize {
         cards
-            .iter()
+            .into_iter()
             .map(|card| cards.iter().filter(|c| c == &card).count())
             .max()
             .unwrap()
@@ -157,15 +158,12 @@ impl Hand {
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
-    let mut hands: Vec<_> = input.lines().map(|line| Hand::parse(line)).collect();
-    hands.sort();
-
-    // dbg!(&hands);
+    let mut hands: Vec<_> = input.par_lines().map(|line| Hand::parse(line)).collect();
+    hands.par_sort();
 
     Ok(hands
         .iter()
         .enumerate()
         .map(|(n, hand)| (n + 1) * hand.bid)
-        // .inspect(|rank| println!("{}", rank))
         .sum())
 }
