@@ -1,19 +1,67 @@
-use std::ops::Bound::*;
-use std::ops::{Range, RangeBounds};
+use derive_more::Deref;
+use std::cmp::Ordering;
+use std::collections::BTreeSet;
+use std::ops::Range;
 
-// use core::ops::Range;
 use itertools::Itertools;
-// use range_set_blaze::prelude::*;
-use ranges::{GenericRange, Ranges};
 use rayon::prelude::*;
 
-// struct Seed(Range<usize>);
+#[derive(Deref, Eq, PartialEq, Debug, Clone)]
+struct SortRange(Range<isize>);
+
+impl Ord for SortRange {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.start.cmp(&other.start)
+    }
+}
+
+impl PartialOrd for SortRange {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 #[derive(Debug)]
 struct ConversionMap {
     start: isize,
     end: isize,
     diff: isize,
+}
+
+#[derive(Debug)]
+struct RangeSet {
+    ranges: BTreeSet<SortRange>,
+}
+
+impl RangeSet {
+    fn new(ranges: BTreeSet<SortRange>) -> RangeSet {
+        RangeSet { ranges }
+    }
+
+    fn merge(&mut self, other: RangeSet) {
+        self.ranges.append(&mut other.ranges.clone())
+    }
+
+    fn split_off(&mut self, split: isize) -> Self {
+        RangeSet {
+            ranges: match &self.ranges.clone().iter().find(|r| r.contains(&split)) {
+                Some(cutoff) => {
+                    let lrange = SortRange(cutoff.start..split);
+                    let rrange = SortRange(split..cutoff.end);
+                    self.ranges.remove(&cutoff);
+                    let mut r = self.ranges.split_off(&cutoff);
+                    if lrange.len() > 0 {
+                        self.ranges.insert(lrange);
+                    }
+                    if rrange.len() > 0 {
+                        r.insert(rrange);
+                    }
+                    r
+                }
+                None => self.ranges.split_off(&SortRange(split..split)),
+            },
+        }
+    }
 }
 
 impl ConversionMap {
@@ -29,28 +77,19 @@ impl ConversionMap {
         }
     }
 
-    fn convert(&self, range: Ranges<isize>) -> (Ranges<isize>, Ranges<isize>) {
-        let bottom = range;
-        let mid = bottom.clone().intersect(self.start..self.end);
-        // let mut mid = bottom.split_off(self.start);
-        // let top = mid.split_off(self.end);
-        let mapped = mid
-            .as_slice()
-            .into_iter()
-            .map(|r| {
-                GenericRange::from(
-                    (match r.start_bound() {
-                        Included(s) => s,
-                        _ => panic!(),
-                    } + self.diff)..=(match r.end_bound() {
-                        Excluded(s) => s,
-                        _ => panic!(),
-                    } + self.diff),
-                )
-            })
-            .collect();
-        let remains = bottom.difference(self.start..self.end);
-        (remains, mapped)
+    fn convert(&self, range: RangeSet) -> (RangeSet, RangeSet) {
+        let mut bottom = range;
+        let mut mid = bottom.split_off(self.start);
+        let top = mid.split_off(self.end);
+        let mapped = RangeSet {
+            ranges: mid
+                .ranges
+                .into_iter()
+                .map(|r| SortRange((r.start + self.diff)..(r.end + self.diff)))
+                .collect::<BTreeSet<SortRange>>(),
+        };
+        bottom.merge(top);
+        (bottom, mapped)
     }
 }
 
@@ -68,23 +107,24 @@ impl ConversionLayer {
         ConversionLayer { _name: name, maps }
     }
 
-    fn convert(&self, input: Ranges<isize>) -> Ranges<isize> {
+    fn convert(&self, input: RangeSet) -> RangeSet {
         let mut current = input;
-        let mut output = vec![];
+        let mut output = RangeSet::new(BTreeSet::new());
         for map in self.maps.iter() {
             let (remains, mapped) = map.convert(current);
-            output.push(mapped);
+            output.merge(mapped);
             current = remains;
         }
-        Ranges::from(*output.as_slice())
-        // output.iter().map(|o| &current.union(o.clone()));
-        // current
-        // output.union()
+        // output.iter().map(|&o| current.merge(o));
+        current.merge(output);
+        current
+        // output
     }
 }
 
-fn parse_seeds(input: &str) -> Ranges<isize> {
-    let mut seeds: Vec<Range<isize>> = vec![];
+fn parse_seeds(input: &str) -> RangeSet {
+    // let mut seeds: Vec<Range<isize>> = vec![];
+    let mut seeds = RangeSet::new(BTreeSet::new());
     let mut values = input
         .split_once(": ")
         .expect("seeds: should be included in the string")
@@ -95,9 +135,9 @@ fn parse_seeds(input: &str) -> Ranges<isize> {
         .tuples();
 
     while let Some((start, length)) = values.next() {
-        seeds.push((start..(start + length)))
+        seeds.ranges.insert(SortRange(start..(start + length)));
     }
-    Ranges::from(seeds)
+    seeds
 }
 
 pub fn run(input: &str) -> Result<isize, String> {
@@ -113,11 +153,13 @@ pub fn run(input: &str) -> Result<isize, String> {
 
     assert_eq!(layers.len(), 7);
 
-    let minimum = seeds
-        .as_slice()
+    let rangesets: Vec<_> = seeds
+        .ranges
         .into_par_iter()
         .map(|seed| {
-            let soil = layers[0].convert(Ranges::from(seed.clone()));
+            let mut rs = RangeSet::new(BTreeSet::new());
+            rs.ranges.insert(seed);
+            let soil = layers[0].convert(rs);
             let fertilizer = layers[1].convert(soil);
             let water = layers[2].convert(fertilizer);
             let light = layers[3].convert(water);
@@ -125,22 +167,13 @@ pub fn run(input: &str) -> Result<isize, String> {
             let humidity = layers[5].convert(temperature);
             layers[6].convert(humidity)
         })
-        .map(|range| {
-            range
-                .as_slice()
-                .iter()
-                .map(|s| match s.start_bound() {
-                    std::ops::Bound::Unbounded => None,
-                    std::ops::Bound::Included(b) => Some(b),
-                    std::ops::Bound::Excluded(_) => None,
-                })
-                .flatten()
-                .min()
-        })
-        .flatten()
+        .collect();
+
+    let minimum = rangesets
+        .into_iter()
+        .map(|rs| rs.ranges.first().unwrap().start)
         .min()
         .unwrap();
-    // let minimum = location.ranges().map(|range| *range.start()).min().unwrap();
 
-    Ok(*minimum)
+    Ok(minimum)
 }

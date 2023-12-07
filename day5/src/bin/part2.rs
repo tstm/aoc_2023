@@ -12,7 +12,7 @@ mod tests {
 
     #[test]
     fn test_example_input() {
-        let input = include_str!("../../example_lowseed.txt");
+        let input = include_str!("../../example.txt");
         let result = run(input).unwrap();
         assert_eq!(result, 46);
     }

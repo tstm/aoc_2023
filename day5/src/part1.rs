@@ -1,116 +1,183 @@
-use core::ops::Range;
+use derive_more::Deref;
+use std::cmp::Ordering;
+use std::collections::BTreeSet;
+use std::ops::Range;
 
-struct Seed(usize);
+use rayon::prelude::*;
 
-#[derive(Debug)]
-struct ConversionMap {
-    from_range: Range<usize>,
-    to_range: usize,
-}
+#[derive(Deref, Eq, PartialEq, Debug, Clone)]
+struct SortRange(Range<isize>);
 
-impl ConversionMap {
-    fn convert(&self, id: usize) -> Option<usize> {
-        // if let Some(pos) = self.from_range.rposition(|s| s == id) {
-        //     eprintln!(
-        //         "Position {}, id {}, range {:?}",
-        //         &pos, &id, &self.from_range
-        //     );
-        //     Some(self.to_range.start + pos)
-        // } else {
-        //     None
-        // }
-
-        self.from_range
-            .clone()
-            .enumerate()
-            .find_map(|(n, from_id)| {
-                if from_id == id {
-                    Some(self.to_range + n)
-                } else {
-                    None
-                }
-            })
+impl Ord for SortRange {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.start.cmp(&other.start)
     }
 }
 
-// struct SoilToFertilizer {
-//     seed_range: Range<usize>,
-//     fertilizer_range: Range<usize>,
-// }
-//
-// struct FertilizerToWater {
-//     seed_range: Range<usize>,
-//     fertilizer_range: Range<usize>,
-// }
-//
-// struct WaterToLight {
-//     seed_range: Range<usize>,
-//     fertilizer_range: Range<usize>,
-// }
-//
-// struct WaterToLight {
-//     seed_range: Range<usize>,
-//     fertilizer_range: Range<usize>,
-// }
-//
+impl PartialOrd for SortRange {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
-fn parse_seeds(input: &str) -> Vec<Seed> {
-    input
+#[derive(Debug)]
+struct ConversionMap {
+    start: isize,
+    end: isize,
+    diff: isize,
+}
+
+#[derive(Debug)]
+struct RangeSet {
+    ranges: BTreeSet<SortRange>,
+}
+
+impl RangeSet {
+    fn new(ranges: BTreeSet<SortRange>) -> RangeSet {
+        RangeSet { ranges }
+    }
+
+    fn merge(&mut self, other: RangeSet) {
+        self.ranges.append(&mut other.ranges.clone())
+    }
+
+    fn split_off(&mut self, split: isize) -> Self {
+        RangeSet {
+            ranges: match &self.ranges.clone().iter().find(|r| r.contains(&split)) {
+                Some(cutoff) => {
+                    let lrange = SortRange(cutoff.start..split);
+                    let rrange = SortRange(split..cutoff.end);
+                    self.ranges.remove(&cutoff);
+                    let mut r = self.ranges.split_off(&cutoff);
+                    if lrange.len() > 0 {
+                        self.ranges.insert(lrange);
+                    }
+                    if rrange.len() > 0 {
+                        r.insert(rrange);
+                    }
+                    r
+                }
+                None => self.ranges.split_off(&SortRange(split..split)),
+            },
+        }
+    }
+
+    // fn find_cutoff(&self, cutoff: &isize) -> Option<&SortRange> {
+    //     self.ranges.iter().find(|r| r.contains(cutoff))
+    // }
+}
+
+impl ConversionMap {
+    pub fn parse(input: &str) -> ConversionMap {
+        let params: Vec<isize> = input
+            .split_whitespace()
+            .map(|n| n.parse::<isize>().expect("Parse conversion number failed"))
+            .collect();
+        ConversionMap {
+            start: params[1],
+            end: params[1] + params[2],
+            diff: params[0] - params[1],
+        }
+    }
+
+    fn convert(&self, range: RangeSet) -> (RangeSet, RangeSet) {
+        let mut bottom = range;
+        let mut mid = bottom.split_off(self.start);
+        let top = mid.split_off(self.end);
+        let mapped = RangeSet {
+            ranges: mid
+                .ranges
+                .into_iter()
+                .map(|r| SortRange((r.start + self.diff)..(r.end + self.diff)))
+                .collect::<BTreeSet<SortRange>>(),
+        };
+        bottom.merge(top);
+        (bottom, mapped)
+    }
+}
+
+struct ConversionLayer {
+    maps: Vec<ConversionMap>,
+    _name: String,
+}
+
+impl ConversionLayer {
+    fn new(input: &str) -> ConversionLayer {
+        let mut iter = input.lines().into_iter();
+        let name = iter.next().expect("Should be topic string").to_string();
+        let maps = iter.map(|c| ConversionMap::parse(c)).collect();
+
+        ConversionLayer { _name: name, maps }
+    }
+
+    fn convert(&self, input: RangeSet) -> RangeSet {
+        let mut current = input;
+        let mut output = RangeSet::new(BTreeSet::new());
+        for map in self.maps.iter() {
+            let (remains, mapped) = map.convert(current);
+            output.merge(mapped);
+            current = remains;
+        }
+        // output.iter().map(|&o| current.merge(o));
+        current.merge(output);
+        current
+        // output
+    }
+}
+
+fn parse_seeds(input: &str) -> RangeSet {
+    // let mut seeds: Vec<Range<isize>> = vec![];
+    let mut seeds = RangeSet::new(BTreeSet::new());
+    let mut values = input
         .split_once(": ")
         .expect("seeds: should be included in the string")
         .1
         .split_whitespace()
-        .map(|n| Seed(n.parse::<usize>().expect("Parse number failed")))
-        .collect::<Vec<_>>()
-}
+        .map(|n| n.parse::<isize>().expect("Parse number failed"));
+    // .collect::<Vec<_>>()
 
-// Takes in just the numbers
-// fn parse_conversion_map(input: &str) -> Vec<ConversionMap> {
-//     input
-//         .lines()
-//         .map(|s| {
-//             let params: Vec<usize> = s
-//                 .split_whitespace()
-//                 .map(|n| n.parse::<usize>().expect("Parse conversion number failed"))
-//                 .collect();
-//             ConversionMap {
-//                 from_range: params[0]..(params[0] + params[2]),
-//                 to_range: params[1]..(params[1] + params[2]),
-//             }
-//         })
-//         .collect()
-// }
-
-fn parse_conversion_map(input: &str) -> ConversionMap {
-    let params: Vec<usize> = input
-        .split_whitespace()
-        .map(|n| n.parse::<usize>().expect("Parse conversion number failed"))
-        .collect();
-    ConversionMap {
-        to_range: params[0],
-        from_range: params[1]..(params[1] + params[2]),
+    while let Some(start) = values.next() {
+        seeds.ranges.insert(SortRange(start..(start + 1)));
     }
+    seeds
 }
 
-pub fn run(input: &str) -> Result<usize, String> {
+pub fn run(input: &str) -> Result<isize, String> {
     // let seeds = lineiter.next().unwrap();
     let chunks: Vec<_> = input.split_terminator("\n\n").collect();
     let seeds = parse_seeds(chunks[0]);
+    let mut layers: Vec<ConversionLayer> = vec![];
 
-    let mut maps: Vec<Vec<ConversionMap>> = Vec::new();
     for chunk in chunks[1..8].into_iter() {
-        let mut iter = chunk.lines().into_iter();
-        let _header = iter.next();
-        maps.push(iter.map(|c| parse_conversion_map(c)).collect());
+        let l = ConversionLayer::new(chunk);
+        layers.push(l);
     }
 
-    Ok(seeds
-        .iter()
+    assert_eq!(layers.len(), 7);
+
+    let rangesets: Vec<_> = seeds
+        .ranges
+        .into_par_iter()
         .map(|seed| {
-            maps.iter().fold(seed.0, |s, m| {
-                m.iter().find_map(|x| x.convert(s)).unwrap_or(s)
-            })
+            let mut rs = RangeSet::new(BTreeSet::new());
+            rs.ranges.insert(seed);
+            let soil = layers[0].convert(rs);
+            let fertilizer = layers[1].convert(soil);
+            let water = layers[2].convert(fertilizer);
+            let light = layers[3].convert(water);
+            let temperature = layers[4].convert(light);
+            let humidity = layers[5].convert(temperature);
+            layers[6].convert(humidity)
         })
+        .collect();
+
+    // dbg!(&rangesets);
+
+    let minimum = rangesets
+        .into_iter()
+        .map(|rs| rs.ranges.first().unwrap().start)
         .min()
-        .expect("No value found?"))
+        .unwrap();
+
+    Ok(minimum)
 }
