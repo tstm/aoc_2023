@@ -53,24 +53,24 @@ enum Combination {
 
 impl Combination {
     fn parse(cards: &[Card; 5]) -> Combination {
-        match Combination::highest_count(cards) {
-            1 => Combination::HighCard,
+        match Self::highest_count(cards) {
+            1 => Self::HighCard,
             2 => {
-                if Combination::unique_count(cards) == 3 {
-                    Combination::TwoPair
+                if Self::unique_count(cards) == 3 {
+                    Self::TwoPair
                 } else {
-                    Combination::OnePair
+                    Self::OnePair
                 }
             }
             3 => {
-                if Combination::unique_count(cards) == 2 {
-                    Combination::FullHouse
+                if Self::unique_count(cards) == 2 {
+                    Self::FullHouse
                 } else {
-                    Combination::ThreeKind
+                    Self::ThreeKind
                 }
             }
-            4 => Combination::FourKind,
-            5 => Combination::FiveKind,
+            4 => Self::FourKind,
+            5 => Self::FiveKind,
             _ => panic!("No combination found"),
         }
     }

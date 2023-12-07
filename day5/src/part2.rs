@@ -1,6 +1,11 @@
+use std::ops::Bound::*;
+use std::ops::{Range, RangeBounds};
+
 // use core::ops::Range;
 use itertools::Itertools;
-use range_set_blaze::prelude::*;
+// use range_set_blaze::prelude::*;
+use ranges::{GenericRange, Ranges};
+use rayon::prelude::*;
 
 // struct Seed(Range<usize>);
 
@@ -24,15 +29,27 @@ impl ConversionMap {
         }
     }
 
-    fn convert(&self, range: RangeSetBlaze<isize>) -> (RangeSetBlaze<isize>, RangeSetBlaze<isize>) {
-        let mut bottom = range;
-        let mut mid = bottom.split_off(self.start);
-        let top = mid.split_off(self.end);
+    fn convert(&self, range: Ranges<isize>) -> (Ranges<isize>, Ranges<isize>) {
+        let bottom = range;
+        let mid = bottom.clone().intersect(self.start..self.end);
+        // let mut mid = bottom.split_off(self.start);
+        // let top = mid.split_off(self.end);
         let mapped = mid
-            .ranges()
-            .map(|r| ((r.start() + self.diff)..=(r.end() + self.diff)))
+            .as_slice()
+            .into_iter()
+            .map(|r| {
+                GenericRange::from(
+                    (match r.start_bound() {
+                        Included(s) => s,
+                        _ => panic!(),
+                    } + self.diff)..=(match r.end_bound() {
+                        Excluded(s) => s,
+                        _ => panic!(),
+                    } + self.diff),
+                )
+            })
             .collect();
-        let remains = top | bottom;
+        let remains = bottom.difference(self.start..self.end);
         (remains, mapped)
     }
 }
@@ -51,7 +68,7 @@ impl ConversionLayer {
         ConversionLayer { _name: name, maps }
     }
 
-    fn convert(&self, input: RangeSetBlaze<isize>) -> RangeSetBlaze<isize> {
+    fn convert(&self, input: Ranges<isize>) -> Ranges<isize> {
         let mut current = input;
         let mut output = vec![];
         for map in self.maps.iter() {
@@ -59,13 +76,15 @@ impl ConversionLayer {
             output.push(mapped);
             current = remains;
         }
-        output.push(current);
-        output.union()
+        Ranges::from(*output.as_slice())
+        // output.iter().map(|o| &current.union(o.clone()));
+        // current
+        // output.union()
     }
 }
 
-fn parse_seeds(input: &str) -> RangeSetBlaze<isize> {
-    let mut seeds: Vec<RangeSetBlaze<isize>> = vec![];
+fn parse_seeds(input: &str) -> Ranges<isize> {
+    let mut seeds: Vec<Range<isize>> = vec![];
     let mut values = input
         .split_once(": ")
         .expect("seeds: should be included in the string")
@@ -76,9 +95,9 @@ fn parse_seeds(input: &str) -> RangeSetBlaze<isize> {
         .tuples();
 
     while let Some((start, length)) = values.next() {
-        seeds.push(RangeSetBlaze::from_iter(start..(start + length)))
+        seeds.push((start..(start + length)))
     }
-    seeds.union()
+    Ranges::from(seeds)
 }
 
 pub fn run(input: &str) -> Result<isize, String> {
@@ -94,15 +113,34 @@ pub fn run(input: &str) -> Result<isize, String> {
 
     assert_eq!(layers.len(), 7);
 
-    let soil = layers[0].convert(seeds.clone());
-    let fertilizer = layers[1].convert(soil);
-    let water = layers[2].convert(fertilizer);
-    let light = layers[3].convert(water);
-    let temperature = layers[4].convert(light);
-    let humidity = layers[5].convert(temperature);
-    let location = layers[6].convert(humidity);
+    let minimum = seeds
+        .as_slice()
+        .into_par_iter()
+        .map(|seed| {
+            let soil = layers[0].convert(Ranges::from(seed.clone()));
+            let fertilizer = layers[1].convert(soil);
+            let water = layers[2].convert(fertilizer);
+            let light = layers[3].convert(water);
+            let temperature = layers[4].convert(light);
+            let humidity = layers[5].convert(temperature);
+            layers[6].convert(humidity)
+        })
+        .map(|range| {
+            range
+                .as_slice()
+                .iter()
+                .map(|s| match s.start_bound() {
+                    std::ops::Bound::Unbounded => None,
+                    std::ops::Bound::Included(b) => Some(b),
+                    std::ops::Bound::Excluded(_) => None,
+                })
+                .flatten()
+                .min()
+        })
+        .flatten()
+        .min()
+        .unwrap();
+    // let minimum = location.ranges().map(|range| *range.start()).min().unwrap();
 
-    let minimum = location.ranges().map(|range| *range.start()).min().unwrap();
-
-    Ok(minimum)
+    Ok(*minimum)
 }
