@@ -1,5 +1,5 @@
 use rayon::prelude::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 struct Number {
@@ -44,15 +44,15 @@ impl Symbol {
         }
     }
 
-    fn get_nearby<'a>(&'a self, numbers: &'a BTreeMap<isize, Vec<Number>>) -> BTreeSet<&Number> {
-        let mut nearby = BTreeSet::new();
+    fn get_nearby<'a>(&'a self, numbers: &'a BTreeMap<isize, Vec<Number>>) -> Vec<&Number> {
+        let mut nearby = Vec::new();
         for (_, lines) in numbers.range((&self.x - 1)..=(&self.x + 1)) {
             for n in lines {
                 let yrange =
                     (n.y - 1)..=(n.y + (n.value.checked_ilog10().unwrap_or(0) + 1) as isize);
 
                 if yrange.contains(&self.y) {
-                    nearby.insert(n);
+                    nearby.push(n);
                 }
             }
         }
