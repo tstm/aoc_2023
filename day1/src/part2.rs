@@ -1,13 +1,12 @@
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
+use itertools::Either;
+use rayon::prelude::*;
 
 struct CalibrationLine(String);
 
 impl CalibrationLine {
     fn get_value(self) -> u32 {
         let first = get_digit(&self.0, false);
-        let last = get_digit(&self.0.chars().rev().collect::<String>(), true);
+        let last = get_digit(&self.0, true);
 
         first * 10 + last
     }
@@ -15,7 +14,11 @@ impl CalibrationLine {
 
 fn get_digit(s: &String, rev: bool) -> u32 {
     let mut substr = "".to_string();
-    for c in s.chars() {
+    let mut characters = Either::Left(s.chars());
+    if rev {
+        characters = Either::Right(s.chars().rev());
+    }
+    for c in characters {
         match c.to_digit(10) {
             Some(f) => {
                 return f;
@@ -51,24 +54,9 @@ fn match_substring(substring: &str) -> Option<u32> {
     .find_map(|(s, n)| substring.contains(s).then_some(*n))
 }
 
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
-}
-
-fn main() -> Result<(), std::io::Error> {
-    if let Ok(lines) = read_lines("input.txt") {
-        let mut sum: u32 = 0;
-        for line in lines {
-            let c = CalibrationLine(line?);
-            sum += c.get_value();
-        }
-
-        println!("Calibration Sum: {}", sum);
-    }
-
-    Ok(())
+pub fn run(input: &str) -> Result<u32, std::io::Error> {
+    Ok(input
+        .par_lines()
+        .map(|l| CalibrationLine(l.to_string()).get_value())
+        .sum())
 }
