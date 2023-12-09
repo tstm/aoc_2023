@@ -18,15 +18,7 @@ impl Report {
 }
 
 fn diff_vec(vector: &Vec<isize>) -> Vec<isize> {
-    let mut it = vector.iter().peekable();
-    let mut result: Vec<_> = vec![];
-    while let Some(value) = it.next() {
-        match it.peek() {
-            Some(p) => result.push(*p - value),
-            None => break,
-        }
-    }
-    result
+    vector.windows(2).map(|n| n[1] - n[0]).collect()
 }
 
 fn extrapolate_first(history: Vec<isize>) -> isize {
