@@ -2,7 +2,9 @@
 
 // use std::cell::RefCell;
 // use prime_factorization::Factorization;
-use std::collections::BTreeMap;
+use core::num::NonZeroU64;
+use gcd::euclid_nonzero_u64;
+use std::collections::HashMap;
 
 use rayon::prelude::*;
 
@@ -35,22 +37,13 @@ impl Next {
     }
 }
 
-fn gcd(mut a: u64, mut b: u64) -> u64 {
-    while b != 0 {
-        let tmp = a;
-        a = b;
-        b = tmp % b;
-    }
-    a
-}
-
 fn lcm(a: u64, b: u64) -> u64 {
-    a * b / gcd(a, b)
+    a * b / euclid_nonzero_u64(NonZeroU64::new(a).unwrap(), NonZeroU64::new(b).unwrap())
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
     let mut it = input.lines();
-    // let mut nodes = BTreeMap::new();
+    // let mut nodes = HashMap::new();
 
     let instructions = it.next().unwrap();
     let nodes = it
@@ -61,11 +54,11 @@ pub fn run(input: &str) -> Result<usize, String> {
             // nodes.insert(node_id, next);
             (node_id.to_string(), next)
         })
-        .collect::<BTreeMap<String, Next>>();
+        .collect::<HashMap<String, Next>>();
 
     let steps = 0;
     let nodestate: Vec<&Next> = nodes
-        .iter()
+        .par_iter()
         .map(|(node, next)| {
             if node.ends_with("A") {
                 Some(next)
@@ -75,8 +68,6 @@ pub fn run(input: &str) -> Result<usize, String> {
         })
         .flatten()
         .collect();
-
-    let statecount = nodestate.len();
 
     let numsteps: Vec<_> = nodestate
         .into_par_iter()

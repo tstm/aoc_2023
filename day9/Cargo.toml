@@ -1,17 +1,16 @@
 [package]
-name = "day8"
+name = "day9"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gcd = "2.3.0"
-prime_factorization = "1.0.4"
 rayon = "1.8.0"
 
 [dev-dependencies]
 divan = "0.1.5"
+rayon = "1.8.0"
 
 [[bench]]
 name = "benchmarks"
