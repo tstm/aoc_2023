@@ -252,6 +252,5 @@ pub fn run(input: &str) -> Result<usize, String> {
         .max_by_key(|x| x.len())
         .unwrap();
 
-    // Ok(((max as f64) / 2.0).floor() as usize)
     Ok(max.len() / 2)
 }

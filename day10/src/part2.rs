@@ -2,13 +2,14 @@
 
 use colored::Colorize;
 use itertools::iproduct;
+use rayon::prelude::IntoParallelIterator;
 use std::collections::HashMap;
 
 use glam::IVec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-// use rayon::prelude::*;
+use rayon::prelude::*;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 enum PipeType {
@@ -241,22 +242,37 @@ pub fn run(input: &str) -> Result<usize, String> {
         .max_by_key(|x| x.len())
         .unwrap();
 
-    let mut clean_map = map.clone();
+    // let mut clean_map = map.clone();
     let max_x = map.keys().map(|pos| pos.x).max().unwrap();
     let max_y = map.keys().map(|pos| pos.y).max().unwrap();
 
-    for (x, y) in iproduct!(0..=max_x, 0..=max_y) {
-        let coord = IVec2::new(x, y);
-        match clean_map.get_mut(&coord) {
-            Some(n) => match max.get(&coord) {
-                Some(_) => {}
-                None => {
-                    (*n).variant = PipeType::Floor;
-                }
-            },
-            None => {}
-        };
-    }
+    // for (x, y) in iproduct!(0..=max_x, 0..=max_y) {
+    let clean_map: HashMap<IVec2, PipeSegment> = (0..=max_y)
+        .into_par_iter()
+        .map(|y| {
+            (0..=max_x)
+                .into_iter()
+                .map(|x| {
+                    let coord = IVec2::new(x, y);
+                    match map.get(&coord) {
+                        Some(n) => match max.get(&coord) {
+                            Some(_) => (coord, n.clone()),
+                            None => {
+                                let mut r = n.clone();
+                                r.variant = PipeType::Floor;
+                                (coord, r)
+                                // (*n).variant = PipeType::Floor;
+                            }
+                        },
+                        None => {
+                            panic!("Something is wrong");
+                        }
+                    }
+                })
+                .collect::<Vec<(IVec2, PipeSegment)>>()
+        })
+        .flatten()
+        .collect();
 
     // for y in 0..=max_y {
     //     let mut line = "".to_string();
@@ -279,18 +295,24 @@ pub fn run(input: &str) -> Result<usize, String> {
     //     }
     //     println!("{}", line);
     // }
-
-    let inside = iproduct!(0..=max_x, 0..=max_y)
-        .filter(|&(x, y)| {
-            let coord = IVec2::new(x, y);
-            match clean_map.get(&coord) {
-                Some(n) => match n.variant {
-                    PipeType::Floor => n.is_inside(&clean_map, max_x, max_y),
-                    _ => false,
-                },
-                _ => false,
-            }
+    let inside = (0..=max_y)
+        .into_par_iter()
+        .map(|y| {
+            (0..=max_x)
+                .into_iter()
+                .filter(|&x| {
+                    let coord = IVec2::new(x, y);
+                    match clean_map.get(&coord) {
+                        Some(n) => match n.variant {
+                            PipeType::Floor => n.is_inside(&clean_map, max_x, max_y),
+                            _ => false,
+                        },
+                        _ => false,
+                    }
+                })
+                .count()
         })
-        .count();
+        .sum();
+
     Ok(inside)
 }
