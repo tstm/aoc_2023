@@ -7,7 +7,7 @@ use glam::IVec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-// use rayon::prelude::*;
+use rayon::prelude::*;
 
 #[derive(PartialEq, Debug)]
 enum PipeType {
@@ -243,14 +243,19 @@ pub fn run(input: &str) -> Result<usize, String> {
     //     })
     //     .max()
     //     .unwrap();
-    let max = Direction::iter()
-        .map(|direction| {
-            let start = map.get(&start_position).unwrap();
-            start.get_loop(&map, direction)
-        })
-        .flatten()
-        .max_by_key(|x| x.len())
-        .unwrap();
+    let max = [
+        Direction::West,
+        Direction::East,
+        Direction::North,
+        Direction::South,
+    ]
+    .into_par_iter()
+    .flat_map(|direction| {
+        let start = map.get(&start_position).unwrap();
+        start.get_loop(&map, direction)
+    })
+    .max_by_key(|x| x.len())
+    .unwrap();
 
     Ok(max.len() / 2)
 }
