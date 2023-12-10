@@ -205,45 +205,53 @@ pub fn run(input: &str) -> Result<usize, String> {
     //     let start = map.get(&start_position).unwrap();
     //     dbg!(start.get_loop(&map, direction));
     // }
+    // let max = Direction::iter()
+    //     .filter(|x| x == &Direction::South)
+    //     .map(|direction| {
+    //         let start = map.get(&start_position).unwrap();
+    //         start.get_loop(&map, direction)
+    //     })
+    //     .flatten()
+    //     .map(|l| {
+    //         println!("");
+    //         println!("");
+    //         let max_x = map.keys().map(|pos| pos.x).max().unwrap();
+    //         let max_y = map.keys().map(|pos| pos.y).max().unwrap();
+    //         // println!("Max x: {} Max y: {}", max_x, max_y);
+    //         for y in 0..=max_y {
+    //             // let mut line = ColoredString::from("");
+    //             let mut line = "".to_string();
+    //             // print!("{} ", y);
+    //             // std::io::stdout().flush().unwrap();
+    //             for x in 0..=max_x {
+    //                 let coord = IVec2::new(x, y);
+    //                 let output = match map.get(&coord) {
+    //                     Some(n) => match l.iter().find(|pipe| pipe.pos == coord) {
+    //                         Some(_) => n.print().green(),
+    //                         None => n.print().bold(),
+    //                     },
+    //                     None => " ".bold(),
+    //                 };
+    //                 line = format!("{}{}", line, output);
+    //                 // print!("{}", output);
+    //                 // std::io::stdout().flush().unwrap();
+    //             }
+    //             println!("{}", line);
+    //         }
+    //         println!("Length: {}", l.len());
+    //         l.len()
+    //     })
+    //     .max()
+    //     .unwrap();
     let max = Direction::iter()
-        .filter(|x| x == &Direction::South)
         .map(|direction| {
             let start = map.get(&start_position).unwrap();
             start.get_loop(&map, direction)
         })
         .flatten()
-        .map(|l| {
-            println!("");
-            println!("");
-            let max_x = map.keys().map(|pos| pos.x).max().unwrap();
-            let max_y = map.keys().map(|pos| pos.y).max().unwrap();
-            // println!("Max x: {} Max y: {}", max_x, max_y);
-            for y in 0..=max_y {
-                // let mut line = ColoredString::from("");
-                let mut line = "".to_string();
-                // print!("{} ", y);
-                // std::io::stdout().flush().unwrap();
-                for x in 0..=max_x {
-                    let coord = IVec2::new(x, y);
-                    let output = match map.get(&coord) {
-                        Some(n) => match l.iter().find(|pipe| pipe.pos == coord) {
-                            Some(_) => n.print().green(),
-                            None => n.print().bold(),
-                        },
-                        None => " ".bold(),
-                    };
-                    line = format!("{}{}", line, output);
-                    // print!("{}", output);
-                    // std::io::stdout().flush().unwrap();
-                }
-                println!("{}", line);
-            }
-            println!("Length: {}", l.len());
-            l.len()
-        })
-        .max()
+        .max_by_key(|x| x.len())
         .unwrap();
 
     // Ok(((max as f64) / 2.0).floor() as usize)
-    Ok(max / 2)
+    Ok(max.len() / 2)
 }

@@ -8,7 +8,7 @@ use glam::IVec2;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use rayon::prelude::*;
+// use rayon::prelude::*;
 
 #[derive(PartialEq, Debug, Copy, Clone)]
 enum PipeType {
@@ -129,14 +129,11 @@ impl PipeSegment {
         Some(retval)
     }
 
-    fn is_inside(&self, map: &HashMap<IVec2, PipeSegment>) -> bool {
+    fn is_inside(&self, map: &HashMap<IVec2, PipeSegment>, max_x: i32, max_y: i32) -> bool {
         use PipeType::*;
 
         let mut crossings = 0;
         let mut first = Floor;
-
-        let max_x = map.keys().map(|pos| pos.x).max().unwrap();
-        let max_y = map.keys().map(|pos| pos.y).max().unwrap();
 
         for x in self.pos.x..=max_x {
             let c = map
@@ -288,7 +285,7 @@ pub fn run(input: &str) -> Result<usize, String> {
             let coord = IVec2::new(x, y);
             match clean_map.get(&coord) {
                 Some(n) => match n.variant {
-                    PipeType::Floor => n.is_inside(&clean_map),
+                    PipeType::Floor => n.is_inside(&clean_map, max_x, max_y),
                     _ => false,
                 },
                 _ => false,

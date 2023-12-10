@@ -12,3 +12,10 @@ itertools = "0.12.0"
 rayon = "1.8.0"
 strum ={ version =  "0.25.0", features = ["std", "strum_macros"] }
 strum_macros = "0.25.3"
+
+[dev-dependencies]
+divan = "0.1.5"
+
+[[bench]]
+name = "benchmarks"
+harness = false
