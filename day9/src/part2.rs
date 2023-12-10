@@ -23,11 +23,11 @@ fn diff_vec(vector: &Vec<isize>) -> Vec<isize> {
 
 fn extrapolate_first(history: Vec<isize>) -> isize {
     match history.iter().all(|n| *n == 0) {
-        true => 0,
         false => {
             history.first().expect("There should be something to keep")
                 - extrapolate_first(diff_vec(&history))
         }
+        true => 0,
     }
 }
 
