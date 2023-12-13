@@ -1,9 +1,6 @@
-#![allow(dead_code, unused_variables)]
-// use glam::IVec2;
-// use itertools::Itertools;
 use rayon::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 enum Tile {
     Rocks,
     Ash,
@@ -34,7 +31,6 @@ fn transpose<T>(original: Vec<Vec<T>>) -> Vec<Vec<T>> {
 
 fn is_mirroring(map: &[Vec<Tile>], line: &usize) -> bool {
     let mut distance = 0;
-    let height = map.len();
     loop {
         distance += 1;
         if line + 1 < distance {
@@ -56,7 +52,6 @@ fn is_mirroring(map: &[Vec<Tile>], line: &usize) -> bool {
 }
 
 fn find_mirror(map: &[Vec<Tile>]) -> Option<usize> {
-    let width = map[0].len();
     let height = map.len();
     (0..(height - 1)).find(|line| is_mirroring(map, line))
 }

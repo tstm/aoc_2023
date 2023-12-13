@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 enum Tile {
     Rocks,
     Ash,
