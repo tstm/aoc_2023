@@ -127,17 +127,17 @@ impl PipeSegment {
         Some(retval)
     }
 
-    fn is_inside(&self, map: &HashMap<IVec2, PipeSegment>, max_x: i32, max_y: i32) -> bool {
+    fn is_inside(&self, map: &Vec<Vec<(IVec2, PipeSegment)>>, max_x: i32, max_y: i32) -> bool {
         use PipeType::*;
 
         let mut crossings = 0;
         let mut first = Floor;
 
         for x in self.pos.x..=max_x {
-            let c = map
-                .get(&IVec2::new(x, self.pos.y))
-                .expect("There should always be a tile")
-                .variant;
+            let c = match map[self.pos.y as usize].get(x as usize) {
+                Some(c) => c.1.variant,
+                None => continue,
+            };
             match (c, first) {
                 (Vertical, _) => crossings += 1,
                 (BendNorthEast | BendSouthEast, _) => first = c,
@@ -249,17 +249,30 @@ pub fn run(input: &str) -> Result<usize, String> {
     let max_y = map.keys().map(|pos| pos.y).max().unwrap();
 
     // for (x, y) in iproduct!(0..=max_x, 0..=max_y) {
-    let clean_map: HashMap<IVec2, PipeSegment> = (0..=max_y)
+    // let (extents: Vec<(i32,i32)>, clean_map: HashMap<IVec2, PipeSegment>) = (0..=max_y)
+    let extents: Vec<(i32, i32)>;
+    let clean_map: Vec<Vec<(IVec2, PipeSegment)>>;
+    (extents, clean_map) = (0..=max_y)
         .into_par_iter()
         .map(|y| {
-            (0..=max_x)
+            let mut xmin = 0;
+            let mut xmax = 0;
+            let retval = (0..=max_x)
                 .into_iter()
                 .map(|x| {
                     let coord = IVec2::new(x, y);
                     match map.get(&coord) {
                         Some(n) => match max.get(&coord) {
-                            Some(_) => (coord, n.clone()),
+                            Some(_) => {
+                                if xmax < x {
+                                    xmax = x;
+                                }
+                                (coord, n.clone())
+                            }
                             None => {
+                                if xmax == 0 {
+                                    xmin = x;
+                                }
                                 let mut r = n.clone();
                                 r.variant = PipeType::Floor;
                                 (coord, r)
@@ -271,10 +284,12 @@ pub fn run(input: &str) -> Result<usize, String> {
                         }
                     }
                 })
-                .collect::<Vec<(IVec2, PipeSegment)>>()
+                .collect::<Vec<(IVec2, PipeSegment)>>();
+            ((xmin, xmax), retval)
         })
-        .flatten()
         .collect();
+
+    // let clean_map: HashMap<IVec2, PipeSegment> = clean_map.into_iter().flatten().collect();
 
     // for y in 0..=max_y {
     //     let mut line = "".to_string();
@@ -300,13 +315,15 @@ pub fn run(input: &str) -> Result<usize, String> {
     let inside = (0..=max_y)
         .into_par_iter()
         .map(|y| {
-            (0..=max_x)
+            (extents[y as usize].0..=extents[y as usize].1)
                 .into_iter()
                 .filter(|&x| {
-                    let coord = IVec2::new(x, y);
-                    match clean_map.get(&coord) {
-                        Some(n) => match n.variant {
-                            PipeType::Floor => n.is_inside(&clean_map, max_x, max_y),
+                    // let coord = IVec2::new(x, y);
+                    match clean_map[y as usize].get(x as usize) {
+                        Some(n) => match n.1.variant {
+                            PipeType::Floor => {
+                                n.1.is_inside(&clean_map, extents[y as usize].1, max_y)
+                            }
                             _ => false,
                         },
                         _ => false,
