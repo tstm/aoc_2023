@@ -32,7 +32,7 @@ fn transpose<T>(original: Vec<Vec<T>>) -> Vec<Vec<T>> {
     transposed
 }
 
-fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
+fn is_mirroring(map: &[Vec<Tile>], line: &usize) -> bool {
     let mut distance = 0;
     let height = map.len();
     loop {
@@ -43,8 +43,8 @@ fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
         let top = map.get(line + 1 - distance);
         let bottom = map.get(line + distance);
 
-        if top.is_some() && bottom.is_some() {
-            if top.unwrap() == bottom.unwrap() {
+        if let (Some(top), Some(bottom)) = (top, bottom) {
+            if top == bottom {
                 continue;
             } else {
                 break false;
@@ -55,7 +55,7 @@ fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
     }
 }
 
-fn find_mirror(map: &Vec<Vec<Tile>>) -> Option<usize> {
+fn find_mirror(map: &[Vec<Tile>]) -> Option<usize> {
     let width = map[0].len();
     let height = map.len();
     (0..(height - 1)).find(|line| is_mirroring(map, line))
@@ -66,7 +66,7 @@ pub fn run(input: &str) -> Result<usize, String> {
         .split("\n\n")
         .map(|map| {
             map.lines()
-                .map(|line| line.chars().map(|c| Tile::from(c)).collect())
+                .map(|line| line.chars().map(Tile::from).collect())
                 .collect()
         })
         .collect();

@@ -29,7 +29,7 @@ fn transpose<T>(original: Vec<Vec<T>>) -> Vec<Vec<T>> {
     transposed
 }
 
-fn difference_is_one(first: &Vec<Tile>, second: &Vec<Tile>) -> bool {
+fn difference_is_one(first: &[Tile], second: &[Tile]) -> bool {
     let mut diff = 0;
     for i in 0..first.len() {
         if first[i] != second[i] {
@@ -44,7 +44,7 @@ fn difference_is_one(first: &Vec<Tile>, second: &Vec<Tile>) -> bool {
     diff == 1
 }
 
-fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
+fn is_mirroring(map: &[Vec<Tile>], line: &usize) -> bool {
     let mut distance = 0;
     let mut smudge_fixed = false;
     loop {
@@ -59,9 +59,7 @@ fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
         let top = map.get(line + 1 - distance);
         let bottom = map.get(line + distance);
 
-        if top.is_some() && bottom.is_some() {
-            let top = top.unwrap();
-            let bottom = bottom.unwrap();
+        if let (Some(top), Some(bottom)) = (top, bottom) {
             if top == bottom {
                 continue;
             } else if !smudge_fixed {
@@ -92,7 +90,7 @@ pub fn run(input: &str) -> Result<usize, String> {
         .split("\n\n")
         .map(|map| {
             map.lines()
-                .map(|line| line.chars().map(|c| Tile::from(c)).collect())
+                .map(|line| line.chars().map(Tile::from).collect())
                 .collect()
         })
         .collect();
