@@ -66,15 +66,16 @@ impl PipeSegment {
 
     fn get_loop<'a>(
         &'a self,
-        map: &'a HashMap<IVec2, PipeSegment>,
+        map: &'a [Vec<(IVec2, PipeSegment)>],
         direction: Direction,
     ) -> Option<HashMap<IVec2, &PipeSegment>> {
         use Direction::*;
         use PipeType::*;
 
         let mut retval = HashMap::new();
-        let mut prev_coord = self.pos;
-        let mut next = match map.get(&self.move_one(&direction)) {
+        let mut prev_coord = &self.pos;
+        let next_direction = &self.move_one(&direction);
+        let mut next = match map[next_direction.y as usize].get(next_direction.x as usize) {
             Some(n) => n,
             None => return None,
         };
@@ -82,30 +83,30 @@ impl PipeSegment {
         // dbg!(map.get(&self.move_one(&direction)));
 
         retval.insert(
-            next.pos,
-            match next.variant {
+            next.1.pos,
+            match &next.1.variant {
                 Vertical => match direction {
-                    North | South => next,
+                    North | South => &next.1,
                     _ => return None,
                 },
                 Horizontal => match direction {
-                    East | West => next,
+                    East | West => &next.1,
                     _ => return None,
                 },
                 BendNorthEast => match direction {
-                    South | West => next,
+                    South | West => &next.1,
                     _ => return None,
                 },
                 BendNorthWest => match direction {
-                    South | East => next,
+                    South | East => &next.1,
                     _ => return None,
                 },
                 BendSouthWest => match direction {
-                    North | East => next,
+                    North | East => &next.1,
                     _ => return None,
                 },
                 BendSouthEast => match direction {
-                    West | North => next,
+                    West | North => &next.1,
                     _ => return None,
                 },
                 Start => todo!(),
@@ -114,14 +115,15 @@ impl PipeSegment {
         );
 
         let last: PipeSegment;
-        while next.variant != Start {
+        while next.1.variant != Start {
             let last = next;
-            next = match map.get(&next.next(prev_coord)) {
+            let next_coord = &next.1.next(*prev_coord);
+            next = match map[next_coord.y as usize].get(next_coord.x as usize) {
                 Some(n) => n,
                 None => return None,
             };
-            prev_coord = last.pos;
-            retval.insert(next.pos, next);
+            prev_coord = &last.1.pos;
+            retval.insert(next.1.pos, &next.1);
         }
 
         Some(retval)
@@ -204,30 +206,33 @@ impl PipeSegment {
 
 pub fn run(input: &str) -> Result<usize, String> {
     let mut start_position = IVec2::new(0, 0);
-    let map = (input.lines().enumerate().flat_map(|(y, line)| {
-        let y = y as i32;
-        line.chars()
-            .enumerate()
-            .flat_map(|(x, c)| {
-                let x = x as i32;
-                let pipe_type = match PipeType::from_char(c) {
-                    None => return None,
-                    Some(p) => p,
-                };
-                if pipe_type == PipeType::Start {
-                    start_position = IVec2::new(x, y);
-                }
-                Some((
-                    IVec2::new(x, y),
-                    PipeSegment {
-                        pos: IVec2::new(x, y),
-                        variant: pipe_type,
-                    },
-                ))
-            })
-            .collect::<Vec<(IVec2, PipeSegment)>>()
-    }))
-    .collect::<HashMap<IVec2, PipeSegment>>();
+    let map = input
+        .lines()
+        .enumerate()
+        .map(|(y, line)| {
+            let y = y as i32;
+            line.chars()
+                .enumerate()
+                .flat_map(|(x, c)| {
+                    let x = x as i32;
+                    let pipe_type = match PipeType::from_char(c) {
+                        None => return None,
+                        Some(p) => p,
+                    };
+                    if pipe_type == PipeType::Start {
+                        start_position = IVec2::new(x, y);
+                    }
+                    Some((
+                        IVec2::new(x, y),
+                        PipeSegment {
+                            pos: IVec2::new(x, y),
+                            variant: pipe_type,
+                        },
+                    ))
+                })
+                .collect::<Vec<(IVec2, PipeSegment)>>()
+        })
+        .collect::<Vec<Vec<(IVec2, PipeSegment)>>>();
 
     let max = [
         Direction::West,
@@ -237,15 +242,17 @@ pub fn run(input: &str) -> Result<usize, String> {
     ]
     .into_par_iter()
     .flat_map(|direction| {
-        let start = map.get(&start_position).unwrap();
+        let start = map[start_position.y as usize][start_position.x as usize].1;
         start.get_loop(&map, direction)
     })
     .max_by_key(|x| x.len())
     .unwrap();
 
     // let mut clean_map = map.clone();
-    let max_x = map.keys().map(|pos| pos.x).max().unwrap();
-    let max_y = map.keys().map(|pos| pos.y).max().unwrap();
+    // let max_x = map.keys().map(|pos| pos.x).max().unwrap();
+    // let max_y = map.keys().map(|pos| pos.y).max().unwrap();
+    let max_x = map[0].len() as i32;
+    let max_y = map.len() as i32;
 
     // for (x, y) in iproduct!(0..=max_x, 0..=max_y) {
     // let (extents: Vec<(i32,i32)>, clean_map: HashMap<IVec2, PipeSegment>) = (0..=max_y)
@@ -259,19 +266,19 @@ pub fn run(input: &str) -> Result<usize, String> {
             let retval = (0..=max_x)
                 .map(|x| {
                     let coord = IVec2::new(x, y);
-                    match map.get(&coord) {
+                    match map[y as usize].get(x as usize) {
                         Some(n) => match max.get(&coord) {
                             Some(_) => {
                                 if xmax < x {
                                     xmax = x;
                                 }
-                                (coord, *n)
+                                (coord, n.1)
                             }
                             None => {
                                 if xmax == 0 {
                                     xmin = x;
                                 }
-                                let mut r = *n;
+                                let mut r = n.1;
                                 r.variant = PipeType::Floor;
                                 (coord, r)
                                 // (*n).variant = PipeType::Floor;

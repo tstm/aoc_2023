@@ -16,6 +16,16 @@ impl From<char> for Tile {
     }
 }
 
+impl From<u8> for Tile {
+    fn from(item: u8) -> Self {
+        match item {
+            b'#' => Self::Rocks,
+            b'.' => Self::Ash,
+            _ => panic!("We only support two tiles {}", item),
+        }
+    }
+}
+
 fn transpose<T>(original: Vec<Vec<T>>) -> Vec<Vec<T>> {
     assert!(!original.is_empty());
     let mut transposed = (0..original[0].len()).map(|_| vec![]).collect::<Vec<_>>();
@@ -90,24 +100,19 @@ pub fn run(input: &str) -> Result<usize, String> {
         .split("\n\n")
         .map(|map| {
             map.lines()
-                .map(|line| line.chars().map(Tile::from).collect())
+                .map(|line| line.bytes().map(Tile::from).collect())
                 .collect()
         })
         .collect();
 
     let retval = maps
         .into_par_iter()
-        .map(|map| {
-            if let Some(line) = find_mirror(&map) {
-                (line + 1) * 100
-            } else {
-                let transposed = transpose(map);
-                if let Some(row) = find_mirror(&transposed) {
-                    row + 1
-                } else {
-                    panic!("All maps should have mirrors?")
-                }
-            }
+        .map(|map| match find_mirror(&map) {
+            Some(line) => (line + 1) * 100,
+            None => match find_mirror(&transpose(map)) {
+                Some(row) => row + 1,
+                None => panic!("All maps should have mirrors?"),
+            },
         })
         .sum();
 
