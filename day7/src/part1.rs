@@ -21,21 +21,21 @@ enum Card {
 }
 
 impl Card {
-    fn parse(symbol: char) -> Card {
+    fn parse(symbol: u8) -> Card {
         match symbol {
-            '2' => Card::Two,
-            '3' => Card::Three,
-            '4' => Card::Four,
-            '5' => Card::Five,
-            '6' => Card::Six,
-            '7' => Card::Seven,
-            '8' => Card::Eight,
-            '9' => Card::Nine,
-            'T' => Card::Ten,
-            'J' => Card::Jack,
-            'Q' => Card::Queen,
-            'K' => Card::King,
-            'A' => Card::Ace,
+            b'2' => Card::Two,
+            b'3' => Card::Three,
+            b'4' => Card::Four,
+            b'5' => Card::Five,
+            b'6' => Card::Six,
+            b'7' => Card::Seven,
+            b'8' => Card::Eight,
+            b'9' => Card::Nine,
+            b'T' => Card::Ten,
+            b'J' => Card::Jack,
+            b'Q' => Card::Queen,
+            b'K' => Card::King,
+            b'A' => Card::Ace,
             _ => panic!("Unknown card type"),
         }
     }
@@ -142,7 +142,7 @@ impl Hand {
             .split_once(" ")
             .expect("There should be cards and bid");
         let cards: [Card; 5] = cards
-            .chars()
+            .bytes()
             .map(|c| Card::parse(c))
             .collect::<Vec<Card>>()
             .try_into()
