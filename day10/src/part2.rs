@@ -204,7 +204,7 @@ impl PipeSegment {
 
 pub fn run(input: &str) -> Result<usize, String> {
     let mut start_position = IVec2::new(0, 0);
-    let map = (input.lines().enumerate().map(|(y, line)| {
+    let map = (input.lines().enumerate().flat_map(|(y, line)| {
         let y = y as i32;
         line.chars()
             .enumerate()
@@ -227,7 +227,6 @@ pub fn run(input: &str) -> Result<usize, String> {
             })
             .collect::<Vec<(IVec2, PipeSegment)>>()
     }))
-    .flatten()
     .collect::<HashMap<IVec2, PipeSegment>>();
 
     let max = [
@@ -258,7 +257,6 @@ pub fn run(input: &str) -> Result<usize, String> {
             let mut xmin = 0;
             let mut xmax = 0;
             let retval = (0..=max_x)
-                .into_iter()
                 .map(|x| {
                     let coord = IVec2::new(x, y);
                     match map.get(&coord) {
@@ -267,13 +265,13 @@ pub fn run(input: &str) -> Result<usize, String> {
                                 if xmax < x {
                                     xmax = x;
                                 }
-                                (coord, n.clone())
+                                (coord, *n)
                             }
                             None => {
                                 if xmax == 0 {
                                     xmin = x;
                                 }
-                                let mut r = n.clone();
+                                let mut r = *n;
                                 r.variant = PipeType::Floor;
                                 (coord, r)
                                 // (*n).variant = PipeType::Floor;
@@ -316,7 +314,6 @@ pub fn run(input: &str) -> Result<usize, String> {
         .into_par_iter()
         .map(|y| {
             (extents[y as usize].0..=extents[y as usize].1)
-                .into_iter()
                 .filter(|&x| {
                     // let coord = IVec2::new(x, y);
                     match clean_map[y as usize].get(x as usize) {
