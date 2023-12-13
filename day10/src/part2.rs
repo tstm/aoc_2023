@@ -127,7 +127,7 @@ impl PipeSegment {
         Some(retval)
     }
 
-    fn is_inside(&self, map: &Vec<Vec<(IVec2, PipeSegment)>>, max_x: i32, max_y: i32) -> bool {
+    fn is_inside(&self, map: &[Vec<(IVec2, PipeSegment)>], max_x: i32, max_y: i32) -> bool {
         use PipeType::*;
 
         let mut crossings = 0;

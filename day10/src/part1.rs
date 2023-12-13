@@ -1,10 +1,8 @@
 #![allow(dead_code, unused_variables)]
 
-use colored::Colorize;
 use std::collections::HashMap;
 
 use glam::IVec2;
-use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use rayon::prelude::*;
@@ -173,7 +171,7 @@ impl PipeSegment {
 
 pub fn run(input: &str) -> Result<usize, String> {
     let mut start_position = IVec2::new(0, 0);
-    let map = (input.lines().enumerate().map(|(y, line)| {
+    let map = (input.lines().enumerate().flat_map(|(y, line)| {
         let y = y as i32;
         line.chars()
             .enumerate()
@@ -196,7 +194,6 @@ pub fn run(input: &str) -> Result<usize, String> {
             })
             .collect::<Vec<(IVec2, PipeSegment)>>()
     }))
-    .flatten()
     .collect::<HashMap<IVec2, PipeSegment>>();
 
     // dbg!(map);
