@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_variables)]
 use rayon::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -48,7 +47,6 @@ fn difference_is_one(first: &Vec<Tile>, second: &Vec<Tile>) -> bool {
 fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
     let mut distance = 0;
     let mut smudge_fixed = false;
-    let height = map.len();
     loop {
         distance += 1;
         if line + 1 < distance {
@@ -85,7 +83,6 @@ fn is_mirroring(map: &Vec<Vec<Tile>>, line: &usize) -> bool {
 }
 
 fn find_mirror(map: &Vec<Vec<Tile>>) -> Option<usize> {
-    let width = map[0].len();
     let height = map.len();
     (0..(height - 1)).find(|line| is_mirroring(map, line))
 }
