@@ -38,22 +38,46 @@ fn check_match(conditions: &Vec<Tile>, groups: &Vec<u8>) -> bool {
     groups == &matchgroups
 }
 
-fn count_arrangements(conditions: Vec<Tile>, groups: &Vec<u8>) -> usize {
+fn count_arrangements(mut conditions: Vec<Tile>, groups: Vec<u8>) -> usize {
     use Tile::*;
 
-    // let mut c = conditions.clone();
-    if let Some(first_index) = conditions.iter().position(|tile| tile == &Unknown) {
-        let mut c1 = conditions.clone();
-        let mut c2 = conditions.clone();
-        c1[first_index] = Operational;
-        c2[first_index] = Damaged;
-        count_arrangements(c1, groups) + count_arrangements(c2, groups)
-    } else {
-        match check_match(&conditions, groups) {
-            true => 1,
-            false => 0,
-        }
+    conditions.push(Operational);
+    let mut cache = vec![vec![None; conditions.len()]; groups.len()];
+    count_arrangements_inner(&conditions, &groups, &mut cache)
+}
+
+fn count_arrangements_inner(
+    conditions: &[Tile],
+    groups: &[u8],
+    cache: &mut [Vec<Option<usize>>],
+) -> usize {
+    use Tile::*;
+    let mut arrangements = 0;
+
+    if groups.is_empty() {
+        return if conditions.contains(&Damaged) { 0 } else { 1 };
     }
+
+    if conditions.len() < groups.iter().sum::<u8>() as usize + groups.len() {
+        return 0;
+    }
+
+    if let Some(cached) = cache[groups.len() - 1][conditions.len() - 1] {
+        return cached;
+    }
+
+    if conditions[0] != Damaged {
+        arrangements += count_arrangements_inner(&conditions[1..], groups, cache);
+    }
+    let next_group_size = groups[0] as usize;
+    if !conditions[..next_group_size].contains(&Operational)
+        && conditions[next_group_size] != Damaged
+    {
+        arrangements +=
+            count_arrangements_inner(&conditions[next_group_size + 1..], &groups[1..], cache);
+    }
+    cache[groups.len() - 1][conditions.len() - 1] = Some(arrangements);
+    arrangements
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
@@ -67,7 +91,7 @@ pub fn run(input: &str) -> Result<usize, String> {
                 .split(",")
                 .map(|c| c.parse::<u8>().unwrap())
                 .collect();
-            count_arrangements(conditions, &groups)
+            count_arrangements(conditions, groups)
         })
         .sum();
     Ok(result)
