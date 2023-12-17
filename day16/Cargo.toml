@@ -1,15 +1,9 @@
 [package]
-name = "day12"
+name = "day16"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-[dev-dependencies]
-divan = "0.1.7"
-
-# [[bench]]
-# name = "benchmarks"
-# harness = false
+derive_more = "0.99.17"
