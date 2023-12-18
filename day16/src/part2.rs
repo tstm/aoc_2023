@@ -156,9 +156,6 @@ struct Grid {
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
-    let mut rays: Vec<LightRay> = vec![];
-    let mut seen = HashMap::new();
-
     let grid = Grid {
         map: input
             .lines()
@@ -169,26 +166,59 @@ pub fn run(input: &str) -> Result<usize, String> {
     let height = grid.map.len();
     let width = grid.map[0].len();
 
-    rays.push(LightRay {
-        x: 0,
-        y: 0,
-        direction: Direction::Right,
+    let mut initial_rays: Vec<LightRay> = vec![];
+    (0..width).for_each(|x| {
+        initial_rays.push(LightRay {
+            x: x as i32,
+            y: 0,
+            direction: Direction::Down,
+        });
+        initial_rays.push(LightRay {
+            x: x as i32,
+            y: height as i32 - 1,
+            direction: Direction::Up,
+        });
     });
 
-    while rays.len() > 0 {
-        let mut new_rays: Vec<LightRay> = rays
-            .iter_mut()
-            .filter(|r| r.is_moving(&grid))
-            .flat_map(|r| r.advance(&grid, &mut seen))
-            .collect();
+    (0..height).for_each(|y| {
+        initial_rays.push(LightRay {
+            x: 0,
+            y: y as i32,
+            direction: Direction::Right,
+        });
+        initial_rays.push(LightRay {
+            x: width as i32 - 1,
+            y: y as i32,
+            direction: Direction::Left,
+        });
+    });
 
-        rays = rays.into_iter().filter(|r| match seen.get(&(r.x, r.y)) {
+    let max: usize = initial_rays
+        .into_iter()
+        .map(|initial_ray| {
+            let mut rays: Vec<LightRay> = vec![];
+            let mut seen = HashMap::new();
+
+            rays.push(initial_ray);
+
+            while rays.len() > 0 {
+                let mut new_rays: Vec<LightRay> = rays
+                    .iter_mut()
+                    .filter(|r| r.is_moving(&grid))
+                    .flat_map(|r| r.advance(&grid, &mut seen))
+                    .collect();
+
+                rays = rays.into_iter().filter(|r| match seen.get(&(r.x, r.y)) {
             Some(directions) => !directions.contains(&r.direction),
             None => true
         }&& r.is_moving(&grid)).collect();
+                rays.append(&mut new_rays);
+            }
 
-        rays.append(&mut new_rays);
-    }
+            seen.len()
+        })
+        .max()
+        .unwrap();
 
     // let height = grid.map.len();
     // let width = grid.map[0].len();
@@ -217,7 +247,7 @@ pub fn run(input: &str) -> Result<usize, String> {
     //     }
     //     println!("{}", line);
     // }
-    let energized = seen.len();
+    // let energized = seen.len();
 
-    Ok(energized)
+    Ok(max)
 }
