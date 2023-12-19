@@ -66,29 +66,6 @@ impl Trench {
     fn get_end(&self) -> Pos {
         self.start.advance(&self.direction, self.length)
     }
-
-    fn get_walls(&self) -> Vec<Pos> {
-        let end = self.get_end();
-
-        match self.direction {
-            Direction::Up => (end.y..self.start.y)
-                .into_iter()
-                .map(|y| Pos { x: self.start.x, y })
-                .collect(),
-            Direction::Down => ((self.start.y)..=end.y)
-                .into_iter()
-                .map(|y| Pos { x: self.start.x, y })
-                .collect(),
-            Direction::Right => ((self.start.x + 1)..=end.x)
-                .into_iter()
-                .map(|x| Pos { x, y: self.start.y })
-                .collect(),
-            Direction::Left => (end.x..self.start.x)
-                .into_iter()
-                .map(|x| Pos { x, y: self.start.y })
-                .collect(),
-        }
-    }
 }
 
 fn shoelace(trenches: &[Trench]) -> usize {
@@ -99,33 +76,6 @@ fn shoelace(trenches: &[Trench]) -> usize {
         area -= win[0].start.y * win[1].start.x;
     }
     area as usize / 2 + 1
-}
-
-fn get_interior_size(grid: &Vec<Vec<char>>) -> usize {
-    let mut interior_size = 0;
-    for line in grid {
-        let mut wall_count = 0;
-        let mut prev_wall = false;
-        for c in line {
-            match c {
-                '.' => {
-                    if wall_count % 2 == 1 {
-                        interior_size += 1;
-                    }
-                    prev_wall = false;
-                }
-                '#' => {
-                    if !prev_wall {
-                        wall_count += 1;
-                    }
-                    interior_size += 1;
-                    prev_wall = true;
-                }
-                _ => panic!("Went out of bounds?"),
-            }
-        }
-    }
-    interior_size
 }
 
 pub fn run(input: &str) -> Result<usize, String> {
@@ -149,36 +99,6 @@ pub fn run(input: &str) -> Result<usize, String> {
         })
         .collect();
 
-    // let walls: Vec<Pos> = trenches.iter().flat_map(Trench::get_walls).collect();
-    //
-    // let min_x = walls.iter().min_by_key(|t| t.x).unwrap().x;
-    // let min_y = walls.iter().min_by_key(|t| t.y).unwrap().y;
-    // let max_x = walls.iter().max_by_key(|t| t.x).unwrap().x;
-    // let max_y = walls.iter().max_by_key(|t| t.y).unwrap().y;
-    //
-    // let x_compensation = if min_x < 0 { min_x.abs() } else { 0 };
-    // let y_compensation = if min_y < 0 { min_y.abs() } else { 0 };
-    //
-    // println!(
-    //     "Min x: {}, Min y: {}, Max x: {}, Max y: {}",
-    //     min_x, min_y, max_x, max_y
-    // );
-    //
-    // let mut grid: Vec<Vec<char>> = (0..=(max_y + y_compensation))
-    //     .map(|_| vec!['.'; max_x as usize + 1 + x_compensation as usize])
-    //     .collect();
-    // walls
-    //     .iter()
-    //     .for_each(|w| grid[(w.y + y_compensation) as usize][(w.x + x_compensation) as usize] = '#');
-    //
-    // let printout = grid
-    //     .iter()
-    //     .map(|line| line.iter().map(|c| c).collect::<String>())
-    //     .collect::<Vec<String>>()
-    //     .join("\n");
-    // println!("{}", printout);
-
-    // Add the last part again to get shoelace to wrap
     trenches.push(trenches.first().unwrap().clone());
 
     Ok(shoelace(&trenches))
