@@ -149,79 +149,146 @@ impl PartRange {
     }
 
     fn split(&self, rule: &Rule) -> (PartRange, PartRange) {
-        let (mut arm1, mut arm2) = match rule.symbol {
-            'x' => (
-                PartRange {
-                    x: (*self.x.start())..=(rule.limit - 1),
-                    m: self.m.clone(),
-                    a: self.a.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-                PartRange {
-                    x: rule.limit..=*self.x.end(),
-                    m: self.m.clone(),
-                    a: self.a.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-            ),
-            'm' => (
-                PartRange {
-                    m: (*self.m.start())..=(rule.limit - 1),
-                    x: self.x.clone(),
-                    a: self.a.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-                PartRange {
-                    m: rule.limit..=*self.m.end(),
-                    x: self.x.clone(),
-                    a: self.a.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-            ),
-            'a' => (
-                PartRange {
-                    a: (*self.a.start())..=(rule.limit - 1),
-                    x: self.x.clone(),
-                    m: self.m.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-                PartRange {
-                    a: rule.limit..=*self.a.end(),
-                    x: self.x.clone(),
-                    m: self.m.clone(),
-                    s: self.s.clone(),
-                    status: None,
-                },
-            ),
-            's' => (
-                PartRange {
-                    s: (*self.s.start())..=(rule.limit - 1),
-                    x: self.x.clone(),
-                    m: self.m.clone(),
-                    a: self.a.clone(),
-                    status: None,
-                },
-                PartRange {
-                    s: (rule.limit)..=*self.s.end(),
-                    x: self.x.clone(),
-                    m: self.m.clone(),
-                    a: self.a.clone(),
-                    status: None,
-                },
-            ),
-            _ => panic!("There should not be more symbols"),
-        };
         match rule.op {
             Operation::GreaterThan => {
+                let (arm1, mut arm2) = match rule.symbol {
+                    'x' => (
+                        PartRange {
+                            x: (*self.x.start())..=(rule.limit),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            x: (rule.limit + 1)..=*self.x.end(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    'm' => (
+                        PartRange {
+                            m: (*self.m.start())..=(rule.limit),
+                            x: self.x.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            m: (rule.limit + 1)..=*self.m.end(),
+                            x: self.x.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    'a' => (
+                        PartRange {
+                            a: (*self.a.start())..=(rule.limit),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            a: (rule.limit + 1)..=*self.a.end(),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    's' => (
+                        PartRange {
+                            s: (*self.s.start())..=(rule.limit),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            s: (rule.limit + 1)..=*self.s.end(),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            status: None,
+                        },
+                    ),
+                    _ => panic!("There should not be more symbols"),
+                };
                 arm2.status = Some(rule.result.clone());
                 (arm2, arm1)
             }
             Operation::LessThan => {
+                let (mut arm1, arm2) = match rule.symbol {
+                    'x' => (
+                        PartRange {
+                            x: (*self.x.start())..=(rule.limit - 1),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            x: rule.limit..=*self.x.end(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    'm' => (
+                        PartRange {
+                            m: (*self.m.start())..=(rule.limit - 1),
+                            x: self.x.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            m: rule.limit..=*self.m.end(),
+                            x: self.x.clone(),
+                            a: self.a.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    'a' => (
+                        PartRange {
+                            a: (*self.a.start())..=(rule.limit - 1),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            a: rule.limit..=*self.a.end(),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            s: self.s.clone(),
+                            status: None,
+                        },
+                    ),
+                    's' => (
+                        PartRange {
+                            s: (*self.s.start())..=(rule.limit - 1),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            status: None,
+                        },
+                        PartRange {
+                            s: (rule.limit)..=*self.s.end(),
+                            x: self.x.clone(),
+                            m: self.m.clone(),
+                            a: self.a.clone(),
+                            status: None,
+                        },
+                    ),
+                    _ => panic!("There should not be more symbols"),
+                };
                 arm1.status = Some(rule.result.clone());
                 (arm1, arm2)
             }
@@ -315,21 +382,12 @@ pub fn run(input: &str) -> Result<usize, String> {
     };
 
     let ranges = part_range.run(&workflows);
-    dbg!(&ranges);
 
     let sum = ranges
         .into_iter()
         .filter(|r| r.status == Some(Next::Accept))
         .map(PartRange::combinations)
         .sum();
-
-    // let parts: Vec<_> = parts_str.lines().map(Part::from).collect();
-
-    // let sum = parts
-    //     .iter()
-    //     .filter(|p| p.run_workflow(workflows.get("in").unwrap(), &workflows))
-    //     .map(Part::sum)
-    //     .sum();
 
     Ok(sum)
 }
