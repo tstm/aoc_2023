@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables)]
-
 // use rayon::prelude::*;
 
 use queues::*;
@@ -13,12 +11,7 @@ struct Pulse {
 }
 
 impl Pulse {
-    fn trigger(&self, modules: &mut HashMap<String, Module>, found: &mut bool) -> Vec<Pulse> {
-        if self.dest == "rx" && self.height == PulseHeight::Low {
-            *found = true;
-            return vec![];
-        }
-        // eprintln!("{} -{:?}- -> {}", self.source, self.height, self.dest);
+    fn trigger(&self, modules: &mut HashMap<String, Module>) -> Vec<Pulse> {
         modules
             .get_mut(&self.dest)
             .unwrap()
@@ -150,6 +143,19 @@ enum PulseHeight {
     Low,
 }
 
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    while b != 0 {
+        let tmp = a;
+        a = b;
+        b = tmp % b;
+    }
+    a
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    a * b / gcd(a, b)
+}
+
 pub fn run(input: &str) -> Result<usize, String> {
     let mut modules: HashMap<String, Module> = input
         .lines()
@@ -168,8 +174,6 @@ pub fn run(input: &str) -> Result<usize, String> {
                 .collect::<Vec<_>>()
         })
         .collect();
-
-    // dbg!(&modules);
 
     outputs.into_iter().for_each(|(source, destination)| {
         if let Some(dest) = modules.get_mut(&destination) {
@@ -192,24 +196,41 @@ pub fn run(input: &str) -> Result<usize, String> {
         }
     });
 
-    let mut pulses: Queue<Pulse> = queue![];
-    let mut found = false;
-    let mut button_presses: usize = 0;
+    let before_rx = modules
+        .values()
+        .find(|m| m.destinations.contains(&"rx".to_string()))
+        .unwrap();
+    let before_rx_name = before_rx.name.clone();
+    let mut tracker = before_rx
+        .inputs
+        .clone()
+        .iter()
+        .map(|i| (i.to_string(), None))
+        .collect::<HashMap<String, Option<usize>>>();
 
-    while !found {
-        button_presses += 1;
+    let mut pulses: Queue<Pulse> = queue![];
+
+    for presses in 1.. {
         let _ = pulses.add(Pulse {
             dest: "broadcaster".to_string(),
             height: PulseHeight::Low,
             source: "button".to_string(),
         });
         while let Ok(pulse) = pulses.remove() {
-            let new_pulses = pulse.trigger(&mut modules, &mut found);
+            if pulse.dest == before_rx_name && pulse.height == PulseHeight::High {
+                *tracker.get_mut(&pulse.source).unwrap() = Some(presses);
+                if tracker.values().all(|presses| presses.is_some()) {
+                    return Ok(tracker
+                        .values()
+                        .map(|presses| presses.unwrap())
+                        .fold(1, |acc, curr| lcm(acc, curr)));
+                }
+            }
+            let new_pulses = pulse.trigger(&mut modules);
             for new in new_pulses {
                 let _ = pulses.add(new);
             }
         }
     }
-    // dbg!(&modules);
-    Ok(button_presses)
+    Err("Failed.".to_string())
 }
